@@ -58,7 +58,7 @@ namespace pinjamdulu_backbone.ViewModels
                 if (user != null)
                 {
                     // TODO: Store user session
-                    _navigationService.NavigateTo(typeof(HomePage));
+                    _navigationService.NavigateTo(typeof(HomePage), user);
                 }
                 else
                 {

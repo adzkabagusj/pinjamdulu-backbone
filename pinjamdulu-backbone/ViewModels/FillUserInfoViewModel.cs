@@ -128,7 +128,7 @@ namespace pinjamdulu_backbone.ViewModels
 
                 if (await _databaseService.CreateUser(user, _password))
                 {
-                    _navigationService.NavigateTo(typeof(HomePage));
+                    _navigationService.NavigateTo(typeof(HomePage), user);
                 }
                 else
                 {
