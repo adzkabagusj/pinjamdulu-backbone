@@ -1,0 +1,59 @@
+﻿<Page x:Class="pinjamdulu_backbone.Views.FillUserInfoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:pinjamdulu_backbone.Views"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="FillUserInfoPage">
+
+    <Grid Background="white">
+        <StackPanel Width="300" VerticalAlignment="Center">
+            <TextBlock Text="Complete Your Profile" 
+                       FontSize="24" 
+                       HorizontalAlignment="Center" 
+                       Margin="0,0,0,20"/>
+
+            <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,5" Padding="5"/>
+
+            <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,5" Padding="5"/>
+
+            <DatePicker SelectedDate="{Binding BirthDate}"
+                        Margin="0,5"/>
+
+            <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,5" Padding="5"/>
+
+            <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,5" Padding="5"/>
+
+            <TextBox Text="{Binding Contact, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,5" Padding="5"/>
+
+            <Button Content="Upload Profile Picture"
+                    Command="{Binding UploadProfilePictureCommand}"
+                    Margin="0,10"
+                    Padding="5"/>
+
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="Red"
+                       TextWrapping="Wrap"
+                       Margin="0,5"/>
+
+            <Button Content="Create Account"
+                    Command="{Binding CreateAccountCommand}"
+                    Margin="0,10"
+                    Padding="5"/>
+        </StackPanel>
+        <TextBlock HorizontalAlignment="Left" Margin="182,91,0,0" TextWrapping="Wrap" Text="Fullname" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="176,126,0,0" TextWrapping="Wrap" Text="username" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="186,162,0,0" TextWrapping="Wrap" Text="birthdate" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="187,197,0,0" TextWrapping="Wrap" Text="address" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="186,238,0,0" TextWrapping="Wrap" Text="city" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="186,277,0,0" TextWrapping="Wrap" Text="contact" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="186,316,0,0" TextWrapping="Wrap" Text="profile pic." VerticalAlignment="Top"/>
+    </Grid>
+</Page>

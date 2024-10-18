@@ -8,6 +8,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using pinjamdulu_backbone.Views;
+using pinjamdulu_backbone.Services;
+using NavigationService = pinjamdulu_backbone.Services.NavigationService;
 
 namespace pinjamdulu_backbone
 {
@@ -16,9 +19,13 @@ namespace pinjamdulu_backbone
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static NavigationService NavigationService { get; private set; }
+
         public MainWindow()
         {
             InitializeComponent();
+            NavigationService = new NavigationService(MainFrame);
+            NavigationService.NavigateTo(typeof(LoginPage)); // first page that shows up when application starts is Login Page.
         }
     }
 }
