@@ -232,15 +232,6 @@ namespace pinjamdulu_backbone.Services
 
                                 using (var imgCmd = new NpgsqlCommand(imagesSql, conn, transaction))
                                 {
-                                    //foreach (var image in gadget.Images)
-                                    //{
-                                    //    imgCmd.Parameters.Clear();
-                                    //    imgCmd.Parameters.AddWithValue("imageId", Guid.NewGuid());
-                                    //    imgCmd.Parameters.AddWithValue("gadgetId", gadgetId);
-                                    //    imgCmd.Parameters.AddWithValue("image", image);
-                                    //    await imgCmd.ExecuteNonQueryAsync();
-                                    //}
-
                                     imgCmd.Parameters.Clear();
                                     imgCmd.Parameters.AddWithValue("imageId", Guid.NewGuid());
                                     imgCmd.Parameters.AddWithValue("gadgetId", gadgetId);
@@ -314,14 +305,6 @@ namespace pinjamdulu_backbone.Services
 
                             using (var imgCmd = new NpgsqlCommand(insertImagesSql, conn, transaction))
                             {
-                                //foreach (var image in gadget.Images)
-                                //{
-                                //    imgCmd.Parameters.Clear();
-                                //    imgCmd.Parameters.AddWithValue("imageId", Guid.NewGuid());
-                                //    imgCmd.Parameters.AddWithValue("gadgetId", gadget.GadgetId);
-                                //    imgCmd.Parameters.AddWithValue("image", image);
-                                //    await imgCmd.ExecuteNonQueryAsync();
-                                //}
                                 imgCmd.Parameters.Clear();
                                 imgCmd.Parameters.AddWithValue("imageId", Guid.NewGuid());
                                 imgCmd.Parameters.AddWithValue("gadgetId", gadget.GadgetId);
@@ -342,5 +325,58 @@ namespace pinjamdulu_backbone.Services
             }
         }
 
+        //--------------------------- HOME PAGE SERVICES ---------------------------//
+        public async Task<List<Gadget>> GetRandomGadgets(int count = 20)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var gadgets = new List<Gadget>();
+
+                var sql = @"
+                    SELECT g.*, 
+                           gi.image[1] as first_image,
+                           COUNT(DISTINCT b.booking_id) as times_rented,
+                           u.city as owner_city
+                    FROM public.""Gadget"" g
+                    LEFT JOIN public.""GadgetImages"" gi ON g.gadget_id = gi.gadget_id
+                    LEFT JOIN public.""Booking"" b ON g.gadget_id = b.gadget_id
+                    LEFT JOIN public.""User"" u ON g.owner_id = u.user_id
+                    GROUP BY g.gadget_id, gi.image[1], u.city
+                    ORDER BY RANDOM()
+                    LIMIT @count";
+
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("count", count);
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var gadget = new Gadget
+                            {
+                                GadgetId = reader.GetGuid(reader.GetOrdinal("gadget_id")),
+                                OwnerId = reader.GetGuid(reader.GetOrdinal("owner_id")),
+                                Title = reader.GetString(reader.GetOrdinal("title")),
+                                Description = reader.GetString(reader.GetOrdinal("description")),
+                                Category = reader.GetString(reader.GetOrdinal("category")),
+                                Brand = reader.GetString(reader.GetOrdinal("brand")),
+                                ConditionMetric = reader.GetInt32(reader.GetOrdinal("condition_metric")),
+                                GadgetRating = reader.GetFloat(reader.GetOrdinal("gadget_rating")),
+                                RentalPrice = reader.GetDecimal(reader.GetOrdinal("rental_price")),
+                                Availability = reader.GetBoolean(reader.GetOrdinal("availability")),
+                                AvailabilityDate = reader.IsDBNull(reader.GetOrdinal("availability_date")) ? null : reader.GetDateTime(reader.GetOrdinal("availability_date")),
+                                Images = reader.IsDBNull(reader.GetOrdinal("first_image")) ? null : new[] { (byte[])reader["first_image"] },
+                                TimesRented = reader.GetInt32(reader.GetOrdinal("times_rented")),
+                                OwnerCity = reader.IsDBNull(reader.GetOrdinal("owner_city")) ? "Unknown" : reader.GetString(reader.GetOrdinal("owner_city"))
+                            };
+                            gadgets.Add(gadget);
+                        }
+                    }
+                }
+                return gadgets;
+            }
+        }
     }
 }

@@ -7,6 +7,7 @@ using pinjamdulu_backbone.Helpers;
 using pinjamdulu_backbone.Models;
 using pinjamdulu_backbone.Services;
 using NavigationService = pinjamdulu_backbone.Services.NavigationService;
+using pinjamdulu_backbone.Views;
 
 namespace pinjamdulu_backbone.ViewModels
 {
@@ -24,6 +25,7 @@ namespace pinjamdulu_backbone.ViewModels
         private string _windowTitle;
         private byte[][] _selectedImages;
 
+        private bool _isLoading;
         private string _errorMessage;
 
         public ListingViewModel(NavigationService navigationService, User currentUser)
@@ -31,7 +33,15 @@ namespace pinjamdulu_backbone.ViewModels
             _databaseService = new DatabaseService();
             _navigationService = navigationService;
             _currentUser = currentUser;
+
+            // Initialize gadget lists to prevent null issues
+            AllGadgets = new ObservableCollection<Gadget>();
+            RentedGadgets = new ObservableCollection<Gadget>();
+
+            // Load gadgets and ensure visibility state is set
+            ShowAllGadgets();
             LoadGadgets();
+
 
             ShowAllGadgetsCommand = new RelayCommand(ShowAllGadgets);
             ShowRentedGadgetsCommand = new RelayCommand(ShowRentedGadgets);
@@ -40,18 +50,38 @@ namespace pinjamdulu_backbone.ViewModels
             SaveGadgetCommand = new RelayCommand(SaveGadget);
             SelectImagesCommand = new RelayCommand(SelectImages);
             CancelCommand = new RelayCommand(CloseAddEditWindow);
+            NavigateToHomeCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(HomePage), currentUser));
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+
+            }
         }
 
         public ObservableCollection<Gadget> AllGadgets
         {
             get => _allGadgets;
-            set => SetProperty(ref _allGadgets, value);
+            set 
+            { 
+                SetProperty(ref _allGadgets, value);
+                OnPropertyChanged(nameof(AllGadgets)); 
+            }
         }
 
         public ObservableCollection<Gadget> RentedGadgets
         {
             get => _rentedGadgets;
-            set => SetProperty(ref _rentedGadgets, value);
+            set
+            {
+                SetProperty(ref _rentedGadgets, value);
+                OnPropertyChanged(nameof(RentedGadgets));
+            }
         }
 
         public bool IsAllGadgetsVisible
@@ -91,25 +121,58 @@ namespace pinjamdulu_backbone.ViewModels
         public ICommand SaveGadgetCommand { get; }
         public ICommand SelectImagesCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand NavigateToHomeCommand {  get; }
+
+        //private async void LoadGadgets()
+        //{
+        //    var gadgets = await _databaseService.GetUserGadgets(_currentUser.UserId);
+
+        //    // Assign gadgets to ObservableCollections
+        //    AllGadgets = new ObservableCollection<Gadget>(gadgets);
+        //    RentedGadgets = new ObservableCollection<Gadget>(
+        //        gadgets.Where(g => g.CurrentRenterUsername != null)
+        //    );
+
+        //    // Ensure all gadgets are visible by default
+        //    IsAllGadgetsVisible = true;
+        //}
 
         private async void LoadGadgets()
         {
-            var gadgets = await _databaseService.GetUserGadgets(_currentUser.UserId);
-            AllGadgets = new ObservableCollection<Gadget>(gadgets);
-            RentedGadgets = new ObservableCollection<Gadget>(
-                gadgets.Where(g => g.CurrentRenterUsername != null)
-            );
+            try
+            {
+                IsLoading = true;
+                var gadgets = await _databaseService.GetRandomGadgets();
+                AllGadgets.Clear();
+                foreach (var gadget in gadgets)
+                {
+                    AllGadgets.Add(gadget);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle error appropriately
+                System.Diagnostics.Debug.WriteLine($"Error loading gadgets: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
+
 
         private void ShowAllGadgets()
         {
             IsAllGadgetsVisible = true;
+            OnPropertyChanged(nameof(AllGadgets)); // Force UI to refresh
         }
 
         private void ShowRentedGadgets()
         {
             IsAllGadgetsVisible = false;
+            OnPropertyChanged(nameof(RentedGadgets)); // Force UI to refresh
         }
+
 
         private void ShowAddWindow()
         {

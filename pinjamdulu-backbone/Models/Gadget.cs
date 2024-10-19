@@ -24,5 +24,6 @@ namespace pinjamdulu_backbone.Models
         public string CurrentRenterUsername { get; set; }
         public DateTime? CurrentRentalStart { get; set; }
         public DateTime? CurrentRentalEnd { get; set; }
+        public string OwnerCity { get; set; }
     }
 }
