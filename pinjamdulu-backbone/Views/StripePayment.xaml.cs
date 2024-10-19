@@ -18,13 +18,13 @@ using System.Windows.Shapes;
 namespace pinjamdulu_backbone.Views
 {
     /// <summary>
-    /// Interaction logic for HomePage.xaml
+    /// Interaction logic for StripePayment.xaml
     /// </summary>
-    public partial class HomePage : Page
+    public partial class StripePayment : Page
     {
-        public HomePage(User user)
+        public StripePayment(User user, PaymentParameters rentData)
         {
-            DataContext = new HomeViewModel(MainWindow.NavigationService, user);
+            DataContext = new StripePaymentViewModel(MainWindow.NavigationService, user, rentData);
             InitializeComponent();
         }
     }

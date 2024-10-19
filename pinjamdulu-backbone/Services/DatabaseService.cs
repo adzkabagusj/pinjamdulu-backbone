@@ -378,5 +378,152 @@ namespace pinjamdulu_backbone.Services
                 return gadgets;
             }
         }
+
+        //--------------------------- GADGET DETAIL PAGE SERVICES ---------------------------//
+        public async Task<Gadget> GetGadgetById(Guid gadgetId)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"SELECT g.*, u.city as owner_city, 
+                            (SELECT COUNT(*) FROM public.""Booking"" WHERE gadget_id = g.gadget_id) as times_rented
+                            FROM public.""Gadget"" g
+                            JOIN public.""User"" u ON g.owner_id = u.user_id
+                            WHERE g.gadget_id = @gadgetId";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new Gadget
+                            {
+                                GadgetId = reader.GetGuid(reader.GetOrdinal("gadget_id")),
+                                OwnerId = reader.GetGuid(reader.GetOrdinal("owner_id")),
+                                Title = reader.GetString(reader.GetOrdinal("title")),
+                                Description = reader.GetString(reader.GetOrdinal("description")),
+                                Category = reader.GetString(reader.GetOrdinal("category")),
+                                Brand = reader.GetString(reader.GetOrdinal("brand")),
+                                ConditionMetric = reader.GetInt32(reader.GetOrdinal("condition_metric")),
+                                GadgetRating = reader.GetFloat(reader.GetOrdinal("gadget_rating")),
+                                RentalPrice = reader.GetDecimal(reader.GetOrdinal("rental_price")),
+                                Availability = reader.GetBoolean(reader.GetOrdinal("availability")),
+                                AvailabilityDate = reader.IsDBNull(reader.GetOrdinal("availability_date")) ? null : reader.GetDateTime(reader.GetOrdinal("availability_date")),
+                                OwnerCity = reader.GetString(reader.GetOrdinal("owner_city")),
+                                TimesRented = reader.GetInt32(reader.GetOrdinal("times_rented"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public async Task<List<Review>> GetGadgetReviews(Guid gadgetId)
+        {
+            var reviews = new List<Review>();
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"SELECT r.*, u.full_name as reviewer_name, u.profile_picture
+                            FROM public.""Review"" r
+                            JOIN public.""Booking"" b ON r.booking_id = b.booking_id
+                            JOIN public.""User"" u ON b.borrower_id = u.user_id
+                            WHERE b.gadget_id = @gadgetId
+                            ORDER BY r.review_date DESC";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            reviews.Add(new Review
+                            {
+                                ReviewId = reader.GetGuid(reader.GetOrdinal("review_id")),
+                                BookingId = reader.GetGuid(reader.GetOrdinal("booking_id")),
+                                Rating = reader.GetInt16(reader.GetOrdinal("rating")),
+                                ReviewText = reader.IsDBNull(reader.GetOrdinal("review_text")) ? null : reader.GetString(reader.GetOrdinal("review_text")),
+                                ReviewDate = reader.GetDateTime(reader.GetOrdinal("review_date")),
+                                ReviewerName = reader.GetString(reader.GetOrdinal("reviewer_name")),
+                                ReviewerProfilePicture = (byte[])reader["profile_picture"]
+                            });
+                        }
+                    }
+                }
+            }
+            return reviews;
+        }
+
+        public async Task<Guid> GetGadgetOwnerId(Guid gadgetId)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = "SELECT owner_id FROM public.\"Gadget\" WHERE gadget_id = @gadgetId";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    return (Guid)await cmd.ExecuteScalarAsync();
+                }
+            }
+        }
+
+        public async Task<string> GetGadgetTitle(Guid gadgetId)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = "SELECT title FROM public.\"Gadget\" WHERE gadget_id = @gadgetId";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    return (string)await cmd.ExecuteScalarAsync();
+                }
+            }
+        }
+
+        //--------------------------- PAYMENT & BOOKING SERVICES ---------------------------//
+        public async Task CreateBooking(Booking booking)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"INSERT INTO public.""Booking"" (booking_id, gadget_id, borrower_id, lender_id, booking_date, rental_start_date, rental_end_date)
+                            VALUES (@bookingId, @gadgetId, @borrowerId, @lenderId, @bookingDate, @rentalStartDate, @rentalEndDate)";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("bookingId", booking.BookingId);
+                    cmd.Parameters.AddWithValue("gadgetId", booking.GadgetId);
+                    cmd.Parameters.AddWithValue("borrowerId", booking.BorrowerId);
+                    cmd.Parameters.AddWithValue("lenderId", booking.LenderId);
+                    cmd.Parameters.AddWithValue("bookingDate", booking.BookingDate);
+                    cmd.Parameters.AddWithValue("rentalStartDate", booking.RentalStartDate);
+                    cmd.Parameters.AddWithValue("rentalEndDate", booking.RentalEndDate);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public async Task CreatePayment(Payment payment)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"INSERT INTO public.""Payment"" (payment_id, booking_id, amount, payment_method, payment_status, transaction_date)
+                            VALUES (@paymentId, @bookingId, @amount, @paymentMethod, @paymentStatus, @transactionDate)";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("paymentId", payment.PaymentId);
+                    cmd.Parameters.AddWithValue("bookingId", payment.BookingId);
+                    cmd.Parameters.AddWithValue("amount", payment.Amount);
+                    cmd.Parameters.AddWithValue("paymentMethod", payment.PaymentMethod);
+                    cmd.Parameters.AddWithValue("paymentStatus", payment.PaymentStatus);
+                    cmd.Parameters.AddWithValue("transactionDate", payment.TransactionDate);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
     }
 }

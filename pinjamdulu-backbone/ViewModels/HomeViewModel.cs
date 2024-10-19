@@ -1,17 +1,29 @@
-﻿using pinjamdulu_backbone.Helpers;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 using pinjamdulu_backbone.Models;
 using pinjamdulu_backbone.Services;
+using pinjamdulu_backbone.Helpers;
 using pinjamdulu_backbone.Views;
-using System.Windows.Input;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace pinjamdulu_backbone.ViewModels
 {
+    public class NavigationParameters
+    {
+        public User User { get; set; }
+        public Gadget Gadget { get; set; }
+
+        public NavigationParameters(User user, Gadget gadget)
+        {
+            User = user;
+            Gadget = gadget;
+        }
+    }
     public class HomeViewModel : BaseViewModel
     {
         private readonly NavigationService _navigationService;
         private readonly DatabaseService _databaseService;
+        private readonly User _currentUser;
         private ObservableCollection<Gadget> _gadgets;
         private bool _isLoading;
 
@@ -36,18 +48,22 @@ namespace pinjamdulu_backbone.ViewModels
         }
 
         public ICommand SignOutCommand { get; }
-        public ICommand NavigateToListingCommand {  get; }
+        public ICommand NavigateToListingCommand { get; }
         public ICommand GadgetSelectedCommand { get; }
 
         public HomeViewModel(NavigationService navigationService, User user)
         {
             _navigationService = navigationService;
+            _currentUser = user;
             _databaseService = new DatabaseService();
             Gadgets = new ObservableCollection<Gadget>();
 
+            // Initialize commands
             SignOutCommand = new RelayCommand(SignOut);
-            NavigateToListingCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ListingPage), user));
+            NavigateToListingCommand = new RelayCommand(NavigateToListing);
             GadgetSelectedCommand = new RelayCommand<Gadget>(OnGadgetSelected);
+
+            // Load gadgets when view model is created
             LoadGadgetsAsync();
         }
 
@@ -67,6 +83,8 @@ namespace pinjamdulu_backbone.ViewModels
             {
                 // Handle error appropriately
                 System.Diagnostics.Debug.WriteLine($"Error loading gadgets: {ex.Message}");
+                // Optionally show error message to user
+                // System.Windows.MessageBox.Show($"Error loading gadgets: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
@@ -78,10 +96,14 @@ namespace pinjamdulu_backbone.ViewModels
         {
             if (gadget != null)
             {
-                // For now, we'll just show the title as requested
-                System.Windows.MessageBox.Show($"Selected Gadget: {gadget.Title}");
-                // Later, you can implement: _navigationService.NavigateTo("GadgetDetailPage", gadget);
+                var navigationParams = new NavigationParameters(_currentUser, gadget);
+                _navigationService.NavigateTo(typeof(GadgetDetail), navigationParams.User, navigationParams.Gadget);
             }
+        }
+
+        private void NavigateToListing()
+        {
+            _navigationService.NavigateTo(typeof(ListingPage), _currentUser);
         }
 
         private void SignOut()

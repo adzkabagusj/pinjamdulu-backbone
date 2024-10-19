@@ -1,0 +1,57 @@
+﻿<Page x:Class="pinjamdulu_backbone.Views.StripePayment"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:pinjamdulu_backbone.Views"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="StripePayment">
+    <Grid Background="white">
+        <StackPanel Margin="20">
+            <Button Content="Back" 
+Command="{Binding goBack}"
+Width="100" Height="30" Margin="0,0,0,20" HorizontalAlignment="left"/>
+            <TextBlock Text="Stripe Payment (Test Mode)" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+            <TextBlock Text="{Binding TotalPrice, StringFormat='Total Amount: Rp {0:N0}'}" FontSize="18" Margin="0,0,0,20"/>
+
+            <!-- Test Mode Information -->
+            <Border BorderBrush="#FFE0E0" BorderThickness="1" Background="#FFF8F8" Padding="15" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Test Mode" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
+                        This payment form is in test mode. The following test scenarios are available:
+                    </TextBlock>
+                    <StackPanel Margin="10,0,0,0">
+                        <TextBlock Text="• Success Payment: Using pm_card_visa" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                        <TextBlock Text="• Declined Payment: Using pm_card_visa_chargeDeclined" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                        <TextBlock Text="• Authentication Required: Using pm_card_visa_authenticationRequired" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Payment Selection -->
+            <TextBlock Text="Select Test Scenario" Margin="0,10,0,5"/>
+            <ComboBox x:Name="TestScenarioComboBox" SelectedIndex="0" Margin="0,0,0,20">
+                <ComboBoxItem Content="Successful Payment (pm_card_visa)"/>
+                <ComboBoxItem Content="Declined Payment (pm_card_visa_chargeDeclined)"/>
+                <ComboBoxItem Content="Authentication Required (pm_card_visa_authenticationRequired)"/>
+            </ComboBox>
+
+            <!-- Payment Button -->
+            <Button Content="Process Test Payment" 
+                    Command="{Binding PayCommand}" 
+                    Margin="0,20,0,0" 
+                    Padding="20,10"
+                    Background="#4CAF50"
+                    Foreground="White"
+                    BorderThickness="0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Page>

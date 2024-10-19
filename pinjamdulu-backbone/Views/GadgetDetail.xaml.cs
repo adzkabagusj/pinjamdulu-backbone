@@ -18,13 +18,13 @@ using System.Windows.Shapes;
 namespace pinjamdulu_backbone.Views
 {
     /// <summary>
-    /// Interaction logic for HomePage.xaml
+    /// Interaction logic for GadgetDetail.xaml
     /// </summary>
-    public partial class HomePage : Page
+    public partial class GadgetDetail : Page
     {
-        public HomePage(User user)
+        public GadgetDetail(User user, Gadget gadget)
         {
-            DataContext = new HomeViewModel(MainWindow.NavigationService, user);
+            DataContext = new GadgetDetailViewModel(MainWindow.NavigationService, user, gadget);
             InitializeComponent();
         }
     }
