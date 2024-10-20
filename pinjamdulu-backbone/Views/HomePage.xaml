@@ -22,6 +22,12 @@
                 Margin="10,10"
                 Padding="5"/>
 
+                <Button Content="Your Profile"
+                Command="{Binding NavigateToProfileCommand}"
+                Width="100"
+                Margin="10,10,50,10"
+                Padding="5"/>
+
                 <Button Content="Your Listing "
                 Command="{Binding NavigateToListingCommand}"
                 Width="100"
@@ -31,8 +37,14 @@
                 <Button Content="Your Rental "
                 Command="{Binding NavigateToRentalCommand}"
                 Width="100"
-                Margin="10,10"
+                Margin="10,10,50,10"
                 Padding="5"/>
+
+                <!--<Button Content="Your Rental "
+                Command="{Binding NavigateTo}"
+                Width="100"
+                Margin="10,10,50,10"
+                Padding="5"/>-->
             </StackPanel>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Gadgets}">

@@ -51,6 +51,7 @@ namespace pinjamdulu_backbone.ViewModels
         public ICommand GadgetSelectedCommand { get; }
         public ICommand NavigateToListingCommand { get; }
         public ICommand NavigateToRentalCommand { get; }
+        public ICommand NavigateToProfileCommand { get; }
 
         public HomeViewModel(NavigationService navigationService, User user)
         {
@@ -64,6 +65,7 @@ namespace pinjamdulu_backbone.ViewModels
             SignOutCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(LoginPage)));
             NavigateToListingCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ListingPage), user));
             NavigateToRentalCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(RentalPage), user));
+            NavigateToProfileCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ProfilePage), user));
 
             // Load gadgets when view model is created
             LoadGadgetsAsync();
