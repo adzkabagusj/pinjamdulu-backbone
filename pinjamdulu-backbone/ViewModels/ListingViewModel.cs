@@ -123,31 +123,24 @@ namespace pinjamdulu_backbone.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand NavigateToHomeCommand {  get; }
 
-        //private async void LoadGadgets()
-        //{
-        //    var gadgets = await _databaseService.GetUserGadgets(_currentUser.UserId);
-
-        //    // Assign gadgets to ObservableCollections
-        //    AllGadgets = new ObservableCollection<Gadget>(gadgets);
-        //    RentedGadgets = new ObservableCollection<Gadget>(
-        //        gadgets.Where(g => g.CurrentRenterUsername != null)
-        //    );
-
-        //    // Ensure all gadgets are visible by default
-        //    IsAllGadgetsVisible = true;
-        //}
-
         private async void LoadGadgets()
         {
             try
             {
                 IsLoading = true;
-                var gadgets = await _databaseService.GetRandomGadgets();
+                var gadgets = await _databaseService.GetUserGadgets(_currentUser.UserId);
                 AllGadgets.Clear();
                 foreach (var gadget in gadgets)
                 {
                     AllGadgets.Add(gadget);
+
+                    //Gadget is rented if there is a renter awokaokw
+                    if(gadget.CurrentRenterUsername != null)
+                    {
+                        RentedGadgets.Add(gadget);
+                    }    
                 }
+
             }
             catch (Exception ex)
             {

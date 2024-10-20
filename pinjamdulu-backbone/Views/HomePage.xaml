@@ -15,19 +15,26 @@
                    FontSize="24" 
                    HorizontalAlignment="Center" 
                    Margin="0,0,0,20"/>
-
-            <Button Content="Sign Out"
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal" >
+                <Button Content="Sign Out"
                 Command="{Binding SignOutCommand}"
                 Width="100"
-                Margin="0,10"
+                Margin="10,10"
                 Padding="5"/>
 
-            <Button Content="Your Listing "
+                <Button Content="Your Listing "
                 Command="{Binding NavigateToListingCommand}"
                 Width="100"
-                Margin="0,10"
-                Padding="5"/>       
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                Margin="10,10"
+                Padding="5"/>
+
+                <Button Content="Your Rental "
+                Command="{Binding NavigateToRentalCommand}"
+                Width="100"
+                Margin="10,10"
+                Padding="5"/>
+            </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Gadgets}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

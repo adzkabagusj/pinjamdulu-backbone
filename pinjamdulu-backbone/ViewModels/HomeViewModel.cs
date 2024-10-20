@@ -48,8 +48,9 @@ namespace pinjamdulu_backbone.ViewModels
         }
 
         public ICommand SignOutCommand { get; }
-        public ICommand NavigateToListingCommand { get; }
         public ICommand GadgetSelectedCommand { get; }
+        public ICommand NavigateToListingCommand { get; }
+        public ICommand NavigateToRentalCommand { get; }
 
         public HomeViewModel(NavigationService navigationService, User user)
         {
@@ -59,9 +60,10 @@ namespace pinjamdulu_backbone.ViewModels
             Gadgets = new ObservableCollection<Gadget>();
 
             // Initialize commands
-            SignOutCommand = new RelayCommand(SignOut);
-            NavigateToListingCommand = new RelayCommand(NavigateToListing);
             GadgetSelectedCommand = new RelayCommand<Gadget>(OnGadgetSelected);
+            SignOutCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(LoginPage)));
+            NavigateToListingCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ListingPage), user));
+            NavigateToRentalCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(RentalPage), user));
 
             // Load gadgets when view model is created
             LoadGadgetsAsync();
@@ -101,14 +103,14 @@ namespace pinjamdulu_backbone.ViewModels
             }
         }
 
-        private void NavigateToListing()
-        {
-            _navigationService.NavigateTo(typeof(ListingPage), _currentUser);
-        }
+        //private void NavigateToListing()
+        //{
+        //    _navigationService.NavigateTo(typeof(ListingPage), _currentUser);
+        //}
 
-        private void SignOut()
-        {
-            _navigationService.NavigateTo(typeof(LoginPage));
-        }
+        //private void SignOut()
+        //{
+        //    _navigationService.NavigateTo(typeof(LoginPage));
+        //}
     }
 }

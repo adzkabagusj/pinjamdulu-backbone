@@ -6,6 +6,7 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BoolToGadgetListMultiConverter x:Key="BoolToGadgetListMultiConverter"/>
     </Application.Resources>
