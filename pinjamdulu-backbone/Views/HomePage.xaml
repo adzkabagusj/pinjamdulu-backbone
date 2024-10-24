@@ -40,11 +40,11 @@
                 Margin="10,10,50,10"
                 Padding="5"/>
 
-                <!--<Button Content="Your Rental "
-                Command="{Binding NavigateTo}"
+                <Button Content="Your Rental "
+                Command="{Binding NavigateToSearchCommand}"
                 Width="100"
-                Margin="10,10,50,10"
-                Padding="5"/>-->
+                Margin="10,10"
+                Padding="5"/>
             </StackPanel>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Gadgets}">
