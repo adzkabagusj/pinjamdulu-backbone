@@ -3,6 +3,7 @@ using pinjamdulu_backbone.Models;
 using pinjamdulu_backbone.Services;
 using pinjamdulu_backbone.Views;
 using System;
+using System.Windows;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -99,16 +100,41 @@ namespace pinjamdulu_backbone.ViewModels
             }
         }
 
-        private void InitiateRental(User user)
+        private async void InitiateRental(User user)
         {
-            var paymentParameters = new PaymentParameters
+            try
             {
-                GadgetId = Gadget.GadgetId,
-                RentEndDate = RentEndDate,
-                TotalPrice = TotalPrice
-            };
+                var (isAvailable, message) = await _databaseService.CheckGadgetAvailabilityForRental(Gadget.GadgetId, user.UserId);
 
-            _navigationService.NavigateTo(typeof(StripePayment), user, paymentParameters);
+                if (!isAvailable)
+                {
+                    MessageBox.Show(
+                        message,
+                        "Rental Not Allowed",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+
+                var paymentParameters = new PaymentParameters
+                {
+                    GadgetId = Gadget.GadgetId,
+                    RentEndDate = RentEndDate,
+                    TotalPrice = TotalPrice
+                };
+                _navigationService.NavigateTo(typeof(StripePayment), user, paymentParameters);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "An error occurred while processing your rental request. Please try again.",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+                System.Diagnostics.Debug.WriteLine($"Rental initiation error: {ex.Message}");
+            }
         }
     }
 

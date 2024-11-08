@@ -493,27 +493,112 @@ namespace pinjamdulu_backbone.Services
             }
         }
 
-       
-        
-        
+        public async Task<(bool isAvailable, string message)> CheckGadgetAvailabilityForRental(Guid gadgetId, Guid userId)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                // First check if user owns this gadget
+                var ownershipSql = @"
+                                    SELECT owner_id 
+                                    FROM public.""Gadget"" 
+                                    WHERE gadget_id = @gadgetId";
+
+                using (var cmd = new NpgsqlCommand(ownershipSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    var ownerId = await cmd.ExecuteScalarAsync() as Guid?;
+
+                    if (ownerId == userId)
+                    {
+                        return (false, "You cannot rent your own gadget.");
+                    }
+                }
+
+                // Then check if gadget is currently rented
+                var rentalSql = @"
+                                SELECT COUNT(*) 
+                                FROM public.""Booking"" 
+                                WHERE gadget_id = @gadgetId 
+                                AND CURRENT_DATE BETWEEN rental_start_date AND rental_end_date";
+
+                using (var cmd = new NpgsqlCommand(rentalSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+                    var activeRentals = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+                    if (activeRentals > 0)
+                    {
+                        return (false, "This gadget is currently being rented by another user.");
+                    }
+                }
+
+                return (true, "Available for rental");
+            }
+        }
+
+
+
+
         //--------------------------- PAYMENT & BOOKING SERVICES ---------------------------//
         public async Task CreateBooking(Booking booking)
         {
             using (var conn = new NpgsqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var sql = @"INSERT INTO public.""Booking"" (booking_id, gadget_id, borrower_id, lender_id, booking_date, rental_start_date, rental_end_date)
-                            VALUES (@bookingId, @gadgetId, @borrowerId, @lenderId, @bookingDate, @rentalStartDate, @rentalEndDate)";
-                using (var cmd = new NpgsqlCommand(sql, conn))
+
+                // Begin transaction
+                using (var transaction = await conn.BeginTransactionAsync())
                 {
-                    cmd.Parameters.AddWithValue("bookingId", booking.BookingId);
-                    cmd.Parameters.AddWithValue("gadgetId", booking.GadgetId);
-                    cmd.Parameters.AddWithValue("borrowerId", booking.BorrowerId);
-                    cmd.Parameters.AddWithValue("lenderId", booking.LenderId);
-                    cmd.Parameters.AddWithValue("bookingDate", booking.BookingDate);
-                    cmd.Parameters.AddWithValue("rentalStartDate", booking.RentalStartDate);
-                    cmd.Parameters.AddWithValue("rentalEndDate", booking.RentalEndDate);
-                    await cmd.ExecuteNonQueryAsync();
+                    try
+                    {
+                        // 1. Insert the booking
+                        var bookingSql = @"
+                    INSERT INTO public.""Booking"" (
+                        booking_id, gadget_id, borrower_id, lender_id, 
+                        booking_date, rental_start_date, rental_end_date
+                    )
+                    VALUES (
+                        @bookingId, @gadgetId, @borrowerId, @lenderId, 
+                        @bookingDate, @rentalStartDate, @rentalEndDate
+                    )";
+
+                        using (var cmd = new NpgsqlCommand(bookingSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("bookingId", booking.BookingId);
+                            cmd.Parameters.AddWithValue("gadgetId", booking.GadgetId);
+                            cmd.Parameters.AddWithValue("borrowerId", booking.BorrowerId);
+                            cmd.Parameters.AddWithValue("lenderId", booking.LenderId);
+                            cmd.Parameters.AddWithValue("bookingDate", booking.BookingDate);
+                            cmd.Parameters.AddWithValue("rentalStartDate", booking.RentalStartDate);
+                            cmd.Parameters.AddWithValue("rentalEndDate", booking.RentalEndDate);
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+
+                        // 2. Update the gadget availability
+                        var gadgetUpdateSql = @"
+                    UPDATE public.""Gadget""
+                    SET availability = false,
+                        availability_date = @availabilityDate
+                    WHERE gadget_id = @gadgetId";
+
+                        using (var cmd = new NpgsqlCommand(gadgetUpdateSql, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("gadgetId", booking.GadgetId);
+                            cmd.Parameters.AddWithValue("availabilityDate", booking.RentalEndDate.AddDays(1));
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+
+                        // Commit the transaction
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception)
+                    {
+                        // If anything goes wrong, roll back both operations
+                        await transaction.RollbackAsync();
+                        throw; // Re-throw the exception to be handled by the caller
+                    }
                 }
             }
         }
@@ -693,6 +778,52 @@ namespace pinjamdulu_backbone.Services
                     cmd.Parameters.AddWithValue("contact", (object)user.Contact ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("profilePicture", (object)user.ProfilePicture ?? DBNull.Value);
 
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+
+        //--------------------------- update gadget availability everytime the app launches ---------------------------//
+        public async Task UpdateGadgetAvailabilityStatus()
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+
+                var sql = @"
+                            -- Update gadgets that have passed their availability_date to be today
+                            UPDATE public.""Gadget"" g
+                            SET 
+                                availability = true,
+                                availability_date = CURRENT_DATE
+                            WHERE availability_date IS NOT NULL 
+                            AND CURRENT_DATE > availability_date;
+
+                            -- Then, update gadgets based on current bookings
+                            UPDATE public.""Gadget"" g
+                            SET 
+                                availability = NOT EXISTS (
+                                    SELECT 1 
+                                    FROM public.""Booking"" b
+                                    WHERE b.gadget_id = g.gadget_id
+                                    AND CURRENT_DATE BETWEEN b.rental_start_date AND b.rental_end_date
+                                ),
+                                availability_date = (
+                                    SELECT b.rental_end_date + 1
+                                    FROM public.""Booking"" b
+                                    WHERE b.gadget_id = g.gadget_id
+                                    AND CURRENT_DATE BETWEEN b.rental_start_date AND b.rental_end_date
+                                )
+                            WHERE EXISTS (
+                                SELECT 1 
+                                FROM public.""Booking"" b
+                                WHERE b.gadget_id = g.gadget_id
+                                AND CURRENT_DATE BETWEEN b.rental_start_date AND b.rental_end_date
+                            );";
+
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
