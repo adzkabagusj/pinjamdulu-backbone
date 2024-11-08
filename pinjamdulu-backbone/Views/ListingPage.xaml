@@ -110,10 +110,10 @@
                     <TextBox Text="{Binding SelectedGadget.Brand}" Margin="0,5"/>
 
                     <TextBlock Text="Condition" FontWeight="Bold" FontSize="12" Margin="0,0,0,20"/>
-                    <TextBox Text="{Binding SelectedGadget.ConditionMetric}" Margin="0,5"/>
+                    <TextBox Text="{Binding SelectedGadget.ConditionMetric, UpdateSourceTrigger=PropertyChanged}" Margin="0,5" MaxLength="1" PreviewTextInput="TextBox_PreviewTextInput"/>
 
                     <TextBlock Text="Rental Price" FontWeight="Bold" FontSize="12" Margin="0,0,0,20"/>
-                    <TextBox Text="{Binding SelectedGadget.RentalPrice}" Margin="0,5"/>
+                    <TextBox Text="{Binding SelectedGadget.RentalPrice}" Margin="0,5" PreviewTextInput="TextBox_PreviewTextInput"/>
 
                     <TextBlock Text="Availability Date" FontWeight="Bold" FontSize="12" Margin="0,0,0,20"/>
                     <DatePicker SelectedDate="{Binding SelectedGadget.AvailabilityDate}" Margin="0,5"/>

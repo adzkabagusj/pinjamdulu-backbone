@@ -104,6 +104,18 @@ namespace pinjamdulu_backbone.ViewModels
         {
             try
             {
+                // Check if the selected rental end date is before the current date
+                if (RentEndDate < DateTime.Today)
+                {
+                    MessageBox.Show(
+                        "You cannot select a rental end date that is today's or before today's date.",
+                        "Invalid Rental Date",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+
                 var (isAvailable, message) = await _databaseService.CheckGadgetAvailabilityForRental(Gadget.GadgetId, user.UserId);
 
                 if (!isAvailable)

@@ -205,6 +205,20 @@ namespace pinjamdulu_backbone.ViewModels
         {
             if (SelectedGadget == null) return;
 
+            // Validate condition metric
+            if (SelectedGadget.ConditionMetric < 1 || SelectedGadget.ConditionMetric > 10)
+            {
+                ErrorMessage = "Condition metric must be an integer between 1 and 10.";
+                return;
+            }
+
+            // Validate rental price
+            if (SelectedGadget.RentalPrice < 0)
+            {
+                ErrorMessage = "Rental price cannot be negative.";
+                return;
+            }
+
             if (_selectedImages != null)
             {
                 SelectedGadget.Images = _selectedImages;
@@ -233,7 +247,7 @@ namespace pinjamdulu_backbone.ViewModels
                 }
             }
             catch (Exception ex)
-            { 
+            {
                 ErrorMessage = "An error occurred while saving the gadget: " + ex.Message;
             }
         }

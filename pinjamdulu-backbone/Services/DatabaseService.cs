@@ -328,9 +328,9 @@ namespace pinjamdulu_backbone.Services
             }
         }
 
-       
-        
-        
+
+
+
         //--------------------------- HOME PAGE SERVICES ---------------------------//
         public async Task<List<Gadget>> GetRandomGadgets(int count = 20)
         {
@@ -338,24 +338,21 @@ namespace pinjamdulu_backbone.Services
             {
                 await conn.OpenAsync();
                 var gadgets = new List<Gadget>();
-
                 var sql = @"
-                    SELECT g.*, 
-                           gi.image[1] as first_image,
-                           COUNT(DISTINCT b.booking_id) as times_rented,
-                           u.city as owner_city
-                    FROM public.""Gadget"" g
-                    LEFT JOIN public.""GadgetImages"" gi ON g.gadget_id = gi.gadget_id
-                    LEFT JOIN public.""Booking"" b ON g.gadget_id = b.gadget_id
-                    LEFT JOIN public.""User"" u ON g.owner_id = u.user_id
-                    GROUP BY g.gadget_id, gi.image[1], u.city
-                    ORDER BY RANDOM()
-                    LIMIT @count";
-
+            SELECT g.*, 
+                   gi.image[1] as first_image,
+                   COUNT(DISTINCT b.booking_id) as times_rented,
+                   u.city as owner_city
+            FROM public.""Gadget"" g
+            LEFT JOIN public.""GadgetImages"" gi ON g.gadget_id = gi.gadget_id
+            LEFT JOIN public.""Booking"" b ON g.gadget_id = b.gadget_id
+            LEFT JOIN public.""User"" u ON g.owner_id = u.user_id
+            GROUP BY g.gadget_id, gi.image[1], u.city
+            ORDER BY RANDOM()
+            LIMIT @count";
                 using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("count", count);
-
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
@@ -385,49 +382,49 @@ namespace pinjamdulu_backbone.Services
             }
         }
 
-       
-        
-        
+
+
+
         //--------------------------- GADGET DETAIL PAGE SERVICES ---------------------------//
-        public async Task<Gadget> GetGadgetById(Guid gadgetId)
-        {
-            using (var conn = new NpgsqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                var sql = @"SELECT g.*, u.city as owner_city, 
-                            (SELECT COUNT(*) FROM public.""Booking"" WHERE gadget_id = g.gadget_id) as times_rented
-                            FROM public.""Gadget"" g
-                            JOIN public.""User"" u ON g.owner_id = u.user_id
-                            WHERE g.gadget_id = @gadgetId";
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("gadgetId", gadgetId);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            return new Gadget
-                            {
-                                GadgetId = reader.GetGuid(reader.GetOrdinal("gadget_id")),
-                                OwnerId = reader.GetGuid(reader.GetOrdinal("owner_id")),
-                                Title = reader.GetString(reader.GetOrdinal("title")),
-                                Description = reader.GetString(reader.GetOrdinal("description")),
-                                Category = reader.GetString(reader.GetOrdinal("category")),
-                                Brand = reader.GetString(reader.GetOrdinal("brand")),
-                                ConditionMetric = reader.GetInt32(reader.GetOrdinal("condition_metric")),
-                                GadgetRating = reader.GetFloat(reader.GetOrdinal("gadget_rating")),
-                                RentalPrice = reader.GetDecimal(reader.GetOrdinal("rental_price")),
-                                Availability = reader.GetBoolean(reader.GetOrdinal("availability")),
-                                AvailabilityDate = reader.IsDBNull(reader.GetOrdinal("availability_date")) ? null : reader.GetDateTime(reader.GetOrdinal("availability_date")),
-                                OwnerCity = reader.GetString(reader.GetOrdinal("owner_city")),
-                                TimesRented = reader.GetInt32(reader.GetOrdinal("times_rented"))
-                            };
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+        //public async Task<Gadget> GetGadgetById(Guid gadgetId)
+        //{
+        //    using (var conn = new NpgsqlConnection(_connectionString))
+        //    {
+        //        await conn.OpenAsync();
+        //        var sql = @"SELECT g.*, u.city as owner_city, 
+        //                    (SELECT COUNT(*) FROM public.""Booking"" WHERE gadget_id = g.gadget_id) as times_rented
+        //                    FROM public.""Gadget"" g
+        //                    JOIN public.""User"" u ON g.owner_id = u.user_id
+        //                    WHERE g.gadget_id = @gadgetId";
+        //        using (var cmd = new NpgsqlCommand(sql, conn))
+        //        {
+        //            cmd.Parameters.AddWithValue("gadgetId", gadgetId);
+        //            using (var reader = await cmd.ExecuteReaderAsync())
+        //            {
+        //                if (await reader.ReadAsync())
+        //                {
+        //                    return new Gadget
+        //                    {
+        //                        GadgetId = reader.GetGuid(reader.GetOrdinal("gadget_id")),
+        //                        OwnerId = reader.GetGuid(reader.GetOrdinal("owner_id")),
+        //                        Title = reader.GetString(reader.GetOrdinal("title")),
+        //                        Description = reader.GetString(reader.GetOrdinal("description")),
+        //                        Category = reader.GetString(reader.GetOrdinal("category")),
+        //                        Brand = reader.GetString(reader.GetOrdinal("brand")),
+        //                        ConditionMetric = reader.GetInt32(reader.GetOrdinal("condition_metric")),
+        //                        GadgetRating = reader.GetFloat(reader.GetOrdinal("gadget_rating")),
+        //                        RentalPrice = reader.GetDecimal(reader.GetOrdinal("rental_price")),
+        //                        Availability = reader.GetBoolean(reader.GetOrdinal("availability")),
+        //                        AvailabilityDate = reader.IsDBNull(reader.GetOrdinal("availability_date")) ? null : reader.GetDateTime(reader.GetOrdinal("availability_date")),
+        //                        OwnerCity = reader.GetString(reader.GetOrdinal("owner_city")),
+        //                        TimesRented = reader.GetInt32(reader.GetOrdinal("times_rented"))
+        //                    };
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return null;
+        //}
 
         public async Task<List<Review>> GetGadgetReviews(Guid gadgetId)
         {
@@ -782,6 +779,7 @@ namespace pinjamdulu_backbone.Services
                 }
             }
         }
+
 
 
         //--------------------------- update gadget availability everytime the app launches ---------------------------//

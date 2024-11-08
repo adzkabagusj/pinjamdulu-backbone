@@ -114,7 +114,7 @@
 
                     <TextBlock Text="Contact:"/>
                     <TextBox Text="{Binding EditContact, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,20"/>
+                             Margin="0,0,0,20" PreviewTextInput="TextBox_PreviewTextInput"/>
 
                     <StackPanel Orientation="Horizontal" 
                               HorizontalAlignment="Right">
