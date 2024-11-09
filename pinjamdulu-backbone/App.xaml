@@ -9,5 +9,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BoolToGadgetListMultiConverter x:Key="BoolToGadgetListMultiConverter"/>
+        <converters:NullValueToBooleanConverter x:Key="NullValueToBooleanConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </Application.Resources>
 </Application>

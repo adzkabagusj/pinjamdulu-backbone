@@ -782,6 +782,108 @@ namespace pinjamdulu_backbone.Services
 
 
 
+        //--------------------------- SEARCH SERVICES ---------------------------//
+        public async Task<List<Gadget>> SearchGadgets(string searchQuery, string category = null, decimal? minPrice = null, decimal? maxPrice = null, float? minRating = null, int? minCondition = null)
+        {
+            using (var conn = new NpgsqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var gadgets = new List<Gadget>();
+
+                // Clean and prepare the search query
+                searchQuery = searchQuery?.Trim() ?? "";
+
+                var sql = @"
+                        SELECT DISTINCT g.*, 
+                               gi.image[1] as first_image,
+                               COUNT(DISTINCT b.booking_id) as times_rented,
+                               u.city as owner_city
+                        FROM public.""Gadget"" g
+                        LEFT JOIN public.""GadgetImages"" gi ON g.gadget_id = gi.gadget_id
+                        LEFT JOIN public.""Booking"" b ON g.gadget_id = b.gadget_id
+                        LEFT JOIN public.""User"" u ON g.owner_id = u.user_id
+                        WHERE (@searchQuery = '' OR ( -- Only apply search if there's a search query
+                            LOWER(g.title) LIKE LOWER(@searchQuery)
+                            OR LOWER(g.description) LIKE LOWER(@searchQuery)
+                            OR LOWER(g.brand) LIKE LOWER(@searchQuery)
+                        ))
+                        AND (@category IS NULL OR LOWER(g.category) = LOWER(@category))
+                        AND (@minPrice IS NULL OR g.rental_price >= @minPrice)
+                        AND (@maxPrice IS NULL OR g.rental_price <= @maxPrice)
+                        AND (@minRating IS NULL OR g.gadget_rating >= @minRating)
+                        AND (@minCondition IS NULL OR g.condition_metric >= @minCondition)
+                        GROUP BY g.gadget_id, gi.image[1], u.city";
+
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    // Add parameters with explicit types
+                    cmd.Parameters.Add(new NpgsqlParameter("searchQuery", NpgsqlTypes.NpgsqlDbType.Text)
+                    { Value = string.IsNullOrWhiteSpace(searchQuery) ? "" : $"%{searchQuery}%" });
+
+                    cmd.Parameters.Add(new NpgsqlParameter("category", NpgsqlTypes.NpgsqlDbType.Text)
+                    { Value = string.IsNullOrWhiteSpace(category) ? DBNull.Value : category.ToLower() });
+
+                    cmd.Parameters.Add(new NpgsqlParameter("minPrice", NpgsqlTypes.NpgsqlDbType.Numeric)
+                    { Value = (object)minPrice ?? DBNull.Value });
+
+                    cmd.Parameters.Add(new NpgsqlParameter("maxPrice", NpgsqlTypes.NpgsqlDbType.Numeric)
+                    { Value = (object)maxPrice ?? DBNull.Value });
+
+                    cmd.Parameters.Add(new NpgsqlParameter("minRating", NpgsqlTypes.NpgsqlDbType.Real)
+                    { Value = (object)minRating ?? DBNull.Value });
+
+                    cmd.Parameters.Add(new NpgsqlParameter("minCondition", NpgsqlTypes.NpgsqlDbType.Integer)
+                    { Value = (object)minCondition ?? DBNull.Value });
+
+                    // Debug logging
+                    System.Diagnostics.Debug.WriteLine($"Executing search with parameters:");
+                    foreach (NpgsqlParameter p in cmd.Parameters)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Parameter {p.ParameterName}: {p.Value} (Type: {p.NpgsqlDbType})");
+                    }
+
+                    try
+                    {
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            var hasRows = reader.HasRows;
+                            System.Diagnostics.Debug.WriteLine($"Query returned results: {hasRows}");
+
+                            while (await reader.ReadAsync())
+                            {
+                                var gadget = new Gadget
+                                {
+                                    GadgetId = reader.GetGuid(reader.GetOrdinal("gadget_id")),
+                                    OwnerId = reader.GetGuid(reader.GetOrdinal("owner_id")),
+                                    Title = reader.GetString(reader.GetOrdinal("title")),
+                                    Description = reader.GetString(reader.GetOrdinal("description")),
+                                    Category = reader.GetString(reader.GetOrdinal("category")),
+                                    Brand = reader.GetString(reader.GetOrdinal("brand")),
+                                    ConditionMetric = reader.GetInt32(reader.GetOrdinal("condition_metric")),
+                                    GadgetRating = reader.GetFloat(reader.GetOrdinal("gadget_rating")),
+                                    RentalPrice = reader.GetDecimal(reader.GetOrdinal("rental_price")),
+                                    Availability = reader.GetBoolean(reader.GetOrdinal("availability")),
+                                    Images = reader.IsDBNull(reader.GetOrdinal("first_image")) ? null : new[] { (byte[])reader["first_image"] },
+                                    TimesRented = reader.GetInt32(reader.GetOrdinal("times_rented")),
+                                    OwnerCity = reader.IsDBNull(reader.GetOrdinal("owner_city")) ? null : reader.GetString(reader.GetOrdinal("owner_city"))
+                                };
+                                gadgets.Add(gadget);
+                                System.Diagnostics.Debug.WriteLine($"Found gadget: {gadget.Title}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error executing query: {ex.Message}");
+                        throw;
+                    }
+                }
+                return gadgets;
+            }
+        }
+
+
+
         //--------------------------- update gadget availability everytime the app launches ---------------------------//
         public async Task UpdateGadgetAvailabilityStatus()
         {

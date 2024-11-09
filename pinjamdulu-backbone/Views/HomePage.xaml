@@ -10,7 +10,7 @@
 
     <Grid Background="white">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-        <Label Content="Login Berhasil!" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Top"/>
+            <Label Content="Login Berhasil!" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Top"/>
             <TextBlock Text="Home Page" 
                    FontSize="24" 
                    HorizontalAlignment="Center" 
@@ -39,13 +39,20 @@
                 Width="100"
                 Margin="10,10,50,10"
                 Padding="5"/>
-
-                <Button Content="Your Rental "
-                Command="{Binding NavigateToSearchCommand}"
-                Width="100"
-                Margin="10,10"
-                Padding="5"/>
             </StackPanel>
+
+            <TextBox Grid.Column="0"
+                 Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="5"
+                 Padding="5"
+                 Width="300"/>
+
+            <Button Grid.Column="1"
+                Content="Search"
+                Command="{Binding SearchCommand}"
+                Margin="5"
+                Padding="5,0"/>
+            
             <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Gadgets}">
                 <ItemsControl.ItemsPanel>

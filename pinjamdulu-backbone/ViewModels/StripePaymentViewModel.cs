@@ -42,6 +42,76 @@ namespace pinjamdulu_backbone.ViewModels
             StripeConfiguration.ApiKey = ConfigurationHelper.GetStripeSecretKey();
         }
 
+        private string _cardNumber;
+        private string _cardExpiry;
+        private string _cardCVC;
+        private string _cardholderName;
+        private bool _isValidCardInfo;
+
+        public string CardNumber
+        {
+            get => _cardNumber;
+            set
+            {
+                _cardNumber = value;
+                OnPropertyChanged(nameof(CardNumber));
+                ValidateCardInfo();
+            }
+        }
+
+        public string CardExpiry
+        {
+            get => _cardExpiry;
+            set
+            {
+                _cardExpiry = value;
+                OnPropertyChanged(nameof(CardExpiry));
+                ValidateCardInfo();
+            }
+        }
+
+        public string CardCVC
+        {
+            get => _cardCVC;
+            set
+            {
+                _cardCVC = value;
+                OnPropertyChanged(nameof(CardCVC));
+                ValidateCardInfo();
+            }
+        }
+
+        public string CardholderName
+        {
+            get => _cardholderName;
+            set
+            {
+                _cardholderName = value;
+                OnPropertyChanged(nameof(CardholderName));
+                ValidateCardInfo();
+            }
+        }
+
+        public bool IsValidCardInfo
+        {
+            get => _isValidCardInfo;
+            set
+            {
+                _isValidCardInfo = value;
+                OnPropertyChanged(nameof(IsValidCardInfo));
+            }
+        }
+
+        private void ValidateCardInfo()
+        {
+            IsValidCardInfo =
+                !string.IsNullOrWhiteSpace(CardNumber) && CardNumber.Replace(" ", "").Length == 16 &&
+                !string.IsNullOrWhiteSpace(CardExpiry) && CardExpiry.Length == 5 &&
+                !string.IsNullOrWhiteSpace(CardCVC) && CardCVC.Length == 3 &&
+                !string.IsNullOrWhiteSpace(CardholderName);
+        }
+
+
         private string GetSelectedPaymentMethod()
         {
             var selectedIndex = System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -70,9 +140,18 @@ namespace pinjamdulu_backbone.ViewModels
         {
             try
             {
-                // Convert price to IDR integer (Stripe expects amounts without decimals for IDR)
-                // For example: 1000000.50 IDR should be 1000000
-                var amountInIDR = (long)Math.Round(_totalPrice*10);
+                var amountInIDR = (long)Math.Round(_totalPrice * 10);
+
+                // For mock purposes, we'll consider 4242 4242 4242 4242 as success
+                var cleanCardNumber = CardNumber.Replace(" ", "");
+                bool isSuccessCard = cleanCardNumber == "4242424242424242";
+
+                if (!isSuccessCard)
+                {
+                    MessageBox.Show("Payment failed: Invalid test card number. Please use 4242 4242 4242 4242 for testing.",
+                                  "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
 
                 var paymentIntentOptions = new PaymentIntentCreateOptions
                 {
@@ -108,7 +187,7 @@ namespace pinjamdulu_backbone.ViewModels
                         PaymentId = Guid.NewGuid(),
                         BookingId = booking.BookingId,
                         Amount = _totalPrice,
-                        PaymentMethod = "Stripe",
+                        PaymentMethod = "Visa",
                         PaymentStatus = true,
                         TransactionDate = DateTime.Now
                     };

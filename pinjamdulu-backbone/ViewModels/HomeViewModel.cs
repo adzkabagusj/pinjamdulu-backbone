@@ -47,6 +47,19 @@ namespace pinjamdulu_backbone.ViewModels
             }
         }
 
+
+        private string _searchQuery;
+        public string SearchQuery
+        {
+            get => _searchQuery;
+            set
+            {
+                _searchQuery = value;
+                OnPropertyChanged(nameof(SearchQuery));
+            }
+        }
+
+        public ICommand SearchCommand { get; }
         public ICommand SignOutCommand { get; }
         public ICommand GadgetSelectedCommand { get; }
         public ICommand NavigateToListingCommand { get; }
@@ -67,10 +80,20 @@ namespace pinjamdulu_backbone.ViewModels
             NavigateToListingCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ListingPage), user));
             NavigateToRentalCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(RentalPage), user));
             NavigateToProfileCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(ProfilePage), user));
+            SearchCommand = new RelayCommand(ExecuteSearch);
             //NavigateToSearchCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(SearchPage), user));
 
             // Load gadgets when view model is created
             LoadGadgetsAsync();
+        }
+
+        private void ExecuteSearch()
+        {
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                var searchParams = new SearchParameters { Query = SearchQuery, User = _currentUser };
+                _navigationService.NavigateTo(typeof(SearchPage), searchParams);
+            }
         }
 
         private async void LoadGadgetsAsync()
@@ -106,15 +129,11 @@ namespace pinjamdulu_backbone.ViewModels
                 _navigationService.NavigateTo(typeof(GadgetDetail), navigationParams.User, navigationParams.Gadget);
             }
         }
+    }
 
-        //private void NavigateToListing()
-        //{
-        //    _navigationService.NavigateTo(typeof(ListingPage), _currentUser);
-        //}
-
-        //private void SignOut()
-        //{
-        //    _navigationService.NavigateTo(typeof(LoginPage));
-        //}
+    public class SearchParameters
+    {
+        public string Query { get; set; }
+        public User User { get; set; }
     }
 }

@@ -54,7 +54,7 @@ namespace pinjamdulu_backbone.ViewModels
         public DateTime TomorrowDate => DateTime.Today.AddDays(1);
         public ObservableCollection<Review> Reviews { get; private set; }
         public ICommand RentCommand { get; }
-        public ICommand NavigateToHomeCommand { get; }
+        public ICommand goBack { get; }
 
         public GadgetDetailViewModel(NavigationService navigationService, User user, Gadget gadget)
         {
@@ -68,7 +68,7 @@ namespace pinjamdulu_backbone.ViewModels
             RentEndDate = TomorrowDate;
             Reviews = new ObservableCollection<Review>();
             RentCommand = new RelayCommand(() => InitiateRental(user));
-            NavigateToHomeCommand = new RelayCommand(() => _navigationService.NavigateTo(typeof(HomePage), user));
+            goBack = new RelayCommand(() => _navigationService.GoBack());
 
             // Load additional details (reviews) asynchronously
             LoadReviewsAsync(gadget.GadgetId);
